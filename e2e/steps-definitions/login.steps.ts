@@ -21,5 +21,53 @@ When('they log in with valid credentials', async ({ page, $testInfo }) => {
 
 Then('they should be redirected after login', async ({ page }) => {
     const loginPage = new LoginPage(page);
-    //await loginPage.expectRedirectedAfterLogin(); 
+    //await loginPage.expectRedirectedAfterLogin();
+});
+
+When('they log in with a wrong password', async ({ page, $testInfo }) => {
+    const portal    = $testInfo.project.name;
+    const user      = getCredentials(portal, 'superAdmin');
+    const locators  = getLocators(portal);
+    const loginPage = new LoginPage(page, locators);
+
+    await loginPage.login(user.email, 'WrongPassword123!');
+});
+
+When('they submit the login form without filling any field', async ({ page, $testInfo }) => {
+    const portal    = $testInfo.project.name;
+    const locators  = getLocators(portal);
+    const loginPage = new LoginPage(page, locators);
+
+    await loginPage.submitEmptyForm();
+});
+
+When('they log in with an unknown email', async ({ page, $testInfo }) => {
+    const portal    = $testInfo.project.name;
+    const locators  = getLocators(portal);
+    const loginPage = new LoginPage(page, locators);
+
+    await loginPage.login('unknown.user@gmail.com', 'SomePassword123!');
+});
+
+When('they enter an invalid email format', async ({ page, $testInfo }) => {
+    const portal    = $testInfo.project.name;
+    const locators  = getLocators(portal);
+    const loginPage = new LoginPage(page, locators);
+
+    await loginPage.enterInvalidEmailFormat('erer');
+});
+
+Then('they should see an invalid email format error', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.expectInvalidEmailFormatError();
+});
+
+Then('they should see a login error', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.expectLoginError();
+});
+
+Then('they should see a required field error', async ({ page }) => {
+    const loginPage = new LoginPage(page);
+    await loginPage.expectRequiredFieldError();
 });
