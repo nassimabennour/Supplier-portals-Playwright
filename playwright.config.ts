@@ -25,7 +25,7 @@ const projects = Object.values(PORTALS).map((portal) => ({
   name: portal.name,
   use: {
     ...devices['Desktop Chrome'],
-    channel: 'chrome',
+    ...(process.env.CI ? {} : { channel: 'chrome' }),
     baseURL: portal.baseURL[ENV],
   },
 }));
