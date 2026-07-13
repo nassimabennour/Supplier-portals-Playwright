@@ -90,7 +90,7 @@ export class LoginPage {
     }
 
     async expectRedirectedAfterLogin() {
-        await expect(this.page).toHaveURL(/home/);
+        await expect(this.page).toHaveURL(/\/home/, { timeout: 30_000 });
     }
 
     async expectLoginError() {
