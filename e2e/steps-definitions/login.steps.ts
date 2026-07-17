@@ -29,6 +29,18 @@ Then('they should be redirected after login', async ({ page }) => {
     await loginPage.expectRedirectedAfterLogin();
 });
 
+Given('the super admin is logged in', async ({ page, $testInfo }) => {
+    const portal    = $testInfo.project.name;
+    const user      = getCredentials(portal, 'superAdmin');
+    const locators  = getLocators(portal);
+    const loginPage = new LoginPage(page, locators);
+
+    await loginPage.goto();
+    await loginPage.login(user.email, user.password);
+    await loginPage.expectRedirectedAfterLogin();
+    await loginPage.acceptCookiesIfPresent();
+});
+
 When('they log in with valid system admin credentials', async ({ page, $testInfo }) => {
     const portal    = $testInfo.project.name;
     const user      = getCredentials(portal, 'systemAdmin');

@@ -1,0 +1,1 @@
+Feature: Supplier User - Deletion

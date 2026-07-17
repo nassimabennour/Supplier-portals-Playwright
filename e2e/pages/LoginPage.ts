@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { PortalLocators } from '../config/portals';
+import { acceptCookiesIfPresent } from './cookieConsent';
 
 export class LoginPage {
     readonly page: Page;
@@ -103,5 +104,9 @@ export class LoginPage {
 
     async expectRequiredFieldError() {
         await expect(this.requiredFieldError).toBeVisible();
+    }
+
+    async acceptCookiesIfPresent() {
+        await acceptCookiesIfPresent(this.page);
     }
 }
