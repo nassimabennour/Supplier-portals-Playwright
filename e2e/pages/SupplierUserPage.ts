@@ -11,11 +11,9 @@ export class SupplierUserPage {
     readonly createMenuItem: Locator;
 
     readonly supplierDropdown: Locator;
-    readonly supplierSearchInput: Locator;
     readonly supplierApplyButton: Locator;
 
     readonly countryDropdown: Locator;
-    readonly countrySearchInput: Locator;
 
     readonly jobCategoryDropdown: Locator;
     readonly jobTitleInput: Locator;
@@ -26,21 +24,22 @@ export class SupplierUserPage {
 
     readonly nextStepButton: Locator;
     readonly createSupplierUserButton: Locator;
-    readonly confirmationMessage: Locator;
 
     constructor(page: Page) {
         this.page = page;
 
-        this.adminMenuToggle = page.locator('#adminConsoleBtn');
+        // There are two near-identical "user-cog" icons in the header markup
+        // across portals; only this exact class combination is the real,
+        // clickable admin console trigger (the other is a decorative
+        // duplicate with a permanently 0x0 layout box).
+        this.adminMenuToggle = page.locator('i.fa-user-cog.pl-3.pt-2.pr-2.pb-2');
         this.supplierUserMenu = page.locator('h4.link-section-header', { hasText: 'Supplier User' });
         this.createMenuItem   = page.locator('h5.create-user');
 
         this.supplierDropdown     = page.locator('div.supplier-dropdown #dropdownMenuButtonForm');
-        this.supplierSearchInput  = page.locator('div.supplier-dropdown #dropdownSearchExample');
         this.supplierApplyButton  = page.getByRole('button', { name: 'Apply' }).first();
 
         this.countryDropdown      = page.locator('div.country-dropdown button[data-toggle="dropdown"]');
-        this.countrySearchInput   = page.locator('div.country-dropdown input[placeholder="Search a country"]');
 
         this.jobCategoryDropdown  = page.locator('#dropdown-category-button');
         this.jobTitleInput        = page.locator('[data-test="job-title"]');
@@ -51,13 +50,13 @@ export class SupplierUserPage {
 
         this.nextStepButton          = page.getByRole('button', { name: 'Next step' });
         this.createSupplierUserButton = page.getByRole('button', { name: 'Create supplier user' });
-        this.confirmationMessage      = page.getByText('User created and linked successfully!');
     }
 
     // ── Navigation ───────────────────────────────────────────────
     async goToCreatePage() {
-        await this.adminMenuToggle.waitFor({ state: 'visible', timeout: 15_000 });
         await acceptCookiesIfPresent(this.page);
+
+        await this.adminMenuToggle.waitFor({ state: 'visible', timeout: 15_000 });
         await this.adminMenuToggle.click();
 
         if (!(await this.createMenuItem.isVisible())) {
@@ -67,20 +66,33 @@ export class SupplierUserPage {
         await this.createMenuItem.click();
     }
 
+    // Some portals show an Apply button per dropdown, others close on
+    // selection alone — only click it if it's actually there.
+    private async clickIfVisible(button: Locator): Promise<void> {
+        if (await button.isVisible().catch(() => false)) {
+            await button.click();
+        }
+    }
+
     // ── Step 1: Account details ─────────────────────────────────
     async fillAccountDetails(user: NewSupplierUser) {
         await this.supplierDropdown.click();
-        await this.supplierSearchInput.fill(user.supplier);
-        await this.page.locator('ul.multi-select-checkbox').getByText(user.supplier, { exact: true }).click();
-        await this.supplierApplyButton.click();
-
-        await this.countryDropdown.click();
-        await this.countrySearchInput.fill(user.country);
-        await this.page.locator('div.country-dropdown ul.multi-select-checkbox').getByText(user.country, { exact: true }).click();
+        await this.page.locator('div.supplier-dropdown ul.multi-select-checkbox li h4')
+            .getByText(user.supplierName, { exact: true }).click();
+        await this.clickIfVisible(this.supplierApplyButton);
         await this.page.keyboard.press('Escape');
 
+        if (user.country) {
+            await this.countryDropdown.waitFor({ state: 'visible', timeout: 10_000 });
+            await this.countryDropdown.click();
+            await this.page.locator('div.country-dropdown ul.multi-select-checkbox li h4')
+                .getByText(user.country, { exact: true }).click();
+            await this.clickIfVisible(this.page.locator('div.country-dropdown').getByRole('button', { name: 'Apply' }));
+            await this.page.keyboard.press('Escape');
+        }
+
         await this.jobCategoryDropdown.click();
-        await this.page.getByText(user.jobCategory, { exact: true }).click();
+        await this.page.locator('#dropdown-animated h4').getByText(user.jobCategory, { exact: true }).click();
 
         await this.firstNameInput.fill(user.firstName);
         await this.lastNameInput.fill(user.lastName);
@@ -94,6 +106,12 @@ export class SupplierUserPage {
 
     // ── Step 2: Access Rights (kept at defaults) ────────────────
     async continueWithDefaultAccessRights() {
+        // Some portals pre-check default reports (satisfying the "at least
+        // one access" requirement automatically), others don't — check the
+        // first available report ourselves if Next step is still disabled.
+        if (!(await this.nextStepButton.isEnabled())) {
+            await this.page.locator('table input[type="checkbox"]:not(:disabled)').first().check();
+        }
         await this.nextStepButton.click();
     }
 
@@ -110,7 +128,7 @@ export class SupplierUserPage {
     }
 
     // ── Assertions ───────────────────────────────────────────────
-    async expectCreationSuccessful() {
-        await expect(this.confirmationMessage).toBeVisible({ timeout: 30_000 });
+    async expectCreationSuccessful(successMessage: string) {
+        await expect(this.page.getByText(successMessage)).toBeVisible({ timeout: 30_000 });
     }
 }
