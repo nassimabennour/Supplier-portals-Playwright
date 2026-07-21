@@ -57,6 +57,10 @@ export class SupplierUserPage {
         await acceptCookiesIfPresent(this.page);
 
         await this.adminMenuToggle.waitFor({ state: 'visible', timeout: 15_000 });
+        // The cookie banner can still appear between the check above and
+        // this click (it doesn't always show immediately after login) —
+        // check once more right at the point of failure.
+        await acceptCookiesIfPresent(this.page);
         await this.adminMenuToggle.click();
 
         if (!(await this.createMenuItem.isVisible())) {
