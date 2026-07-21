@@ -30,6 +30,11 @@ Then('they should be redirected after login', async ({ page }) => {
     await loginPage.expectRedirectedAfterLogin();
 });
 
+Given('cookies are accepted if present', async ({ page }) => {
+    const cookieConsent = new CookieConsent(page);
+    await cookieConsent.acceptIfPresent();
+});
+
 Given('the super admin is logged in', async ({ page, $testInfo }) => {
     const portal    = $testInfo.project.name;
     const user      = getCredentials(portal, 'superAdmin');
