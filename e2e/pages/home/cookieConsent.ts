@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 
 // Cookie banner text is localized per portal ("Accept" / "Accepter" / etc.)
 // and matching by wording keeps breaking as new languages show up, so this
@@ -8,12 +8,17 @@ import { Page } from '@playwright/test';
 // the accept action is always the last button.
 // It can also appear after the initial page load rather than immediately,
 // so this is best-effort and never fails the test if no banner shows up.
-export async function acceptCookiesIfPresent(page: Page) {
-    const acceptButton = page.locator('#cookieModal .modal-footer button').last();
 
-    try {
-        await acceptButton.click({ timeout: 5_000 });
-    } catch {
-        // No cookie banner shown — nothing to do.
+export class CookieConsent {
+    readonly acceptButton: Locator;
+
+    constructor(page: Page) {
+        this.acceptButton = page.locator('#cookieModal .modal-footer button').last();
+    }
+
+    async acceptIfPresent() {
+        if (await this.acceptButton.isVisible({ timeout: 5_000 }).catch(() => false)) {
+            await this.acceptButton.click();
+        }
     }
 }

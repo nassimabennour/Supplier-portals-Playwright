@@ -1,6 +1,6 @@
 import { createBdd } from 'playwright-bdd';
-import { SupplierUserPage } from '../pages/SupplierUserPage';
-import { generateSupplierUser } from '../fixtures/supplierUser';
+import { SupplierUserPage } from '../../pages/supplier-users/SupplierUserCreatePage';
+import { generateSupplierUser } from '../../fixtures/supplierUser';
 
 const { When, Then } = createBdd();
 

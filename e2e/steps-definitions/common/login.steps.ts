@@ -1,7 +1,8 @@
 import { createBdd } from 'playwright-bdd';
-import { LoginPage } from '../pages/LoginPage';
-import { getCredentials } from '../fixtures/users';
-import { getLocators } from '../locators/locators';
+import { LoginPage } from '../../pages/auth/LoginPage';
+import { CookieConsent } from '../../pages/home/cookieConsent';
+import { getCredentials } from '../../fixtures/users';
+import { getLocators } from '../../locators/locators';
 
 const { Given, When, Then } = createBdd();
 
@@ -38,7 +39,8 @@ Given('the super admin is logged in', async ({ page, $testInfo }) => {
     await loginPage.goto();
     await loginPage.login(user.email, user.password);
     await loginPage.expectRedirectedAfterLogin();
-    await loginPage.acceptCookiesIfPresent();
+    const cookieConsent = new CookieConsent(page);
+    await cookieConsent.acceptIfPresent();
 });
 
 When('they log in with valid system admin credentials', async ({ page, $testInfo }) => {

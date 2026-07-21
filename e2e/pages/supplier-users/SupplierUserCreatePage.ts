@@ -1,6 +1,6 @@
 import { Page, Locator, expect } from '@playwright/test';
-import { NewSupplierUser } from '../fixtures/supplierUser';
-import { acceptCookiesIfPresent } from './cookieConsent';
+import { NewSupplierUser } from '../../fixtures/supplierUser';
+import { CookieConsent } from '../home/cookieConsent';
 
 export class SupplierUserPage {
     readonly page: Page;
@@ -54,13 +54,14 @@ export class SupplierUserPage {
 
     // ── Navigation ───────────────────────────────────────────────
     async goToCreatePage() {
-        await acceptCookiesIfPresent(this.page);
+        const cookieConsent = new CookieConsent(this.page);
+        await cookieConsent.acceptIfPresent();
 
         await this.adminMenuToggle.waitFor({ state: 'visible', timeout: 15_000 });
         // The cookie banner can still appear between the check above and
         // this click (it doesn't always show immediately after login) —
         // check once more right at the point of failure.
-        await acceptCookiesIfPresent(this.page);
+        await cookieConsent.acceptIfPresent();
         await this.adminMenuToggle.click();
 
         if (!(await this.createMenuItem.isVisible())) {
