@@ -1,6 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
-import { PortalLocators } from '../config/portals';
-import { acceptCookiesIfPresent } from './cookieConsent';
+import { PortalLocators } from '../../config/portals';
 
 export class LoginPage {
     readonly page: Page;
@@ -10,6 +9,7 @@ export class LoginPage {
     readonly emailInput: Locator;
     readonly passwordInput: Locator;
     readonly loginButton: Locator;
+
     readonly errorMessage: Locator;
     readonly emailFormatError: Locator;
     readonly requiredFieldError: Locator;
@@ -91,7 +91,7 @@ export class LoginPage {
     }
 
     async expectRedirectedAfterLogin() {
-        await expect(this.page).toHaveURL(/\/home/, { timeout: 30_000 });
+        await expect(this.page).toHaveURL(/home/);
     }
 
     async expectLoginError() {
@@ -104,9 +104,5 @@ export class LoginPage {
 
     async expectRequiredFieldError() {
         await expect(this.requiredFieldError).toBeVisible();
-    }
-
-    async acceptCookiesIfPresent() {
-        await acceptCookiesIfPresent(this.page);
-    }
+     }
 }
