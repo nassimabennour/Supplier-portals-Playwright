@@ -91,7 +91,10 @@ export class LoginPage {
     }
 
     async expectRedirectedAfterLogin() {
-        await expect(this.page).toHaveURL(/home/);
+        // The B2C OAuth redirect chain can take longer than the default 5s
+        // expect timeout, especially on slower portals — give it more room
+        // rather than inflating the global default for every assertion.
+        await expect(this.page).toHaveURL(/home/, { timeout: 20_000 });
     }
 
     async expectLoginError() {
