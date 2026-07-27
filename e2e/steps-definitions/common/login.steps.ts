@@ -1,7 +1,7 @@
 import { createBdd } from 'playwright-bdd';
-import { LoginPage } from '../pages/LoginPage';
-import { getCredentials } from '../fixtures/users';
-import { getLocators } from '../locators/locators';
+import { LoginPage } from '../../pages/auth/LoginPage';
+import { getCredentials } from '../../fixtures/users';
+import { getLocators } from '../../locators/locators';
 
 const { Given, When, Then } = createBdd();
 

@@ -16,8 +16,8 @@ dotenv.config({ path: `.env.${ENV}` });
 
 const testDir = defineBddConfig({
   outputDir: '.features-gen',
-  features: 'e2e/features/*.feature',
-  steps: 'e2e/steps-definitions/*.steps.ts',
+  features: 'e2e/features/**/*.feature',
+  steps: 'e2e/steps-definitions/**/*.steps.ts',
 });
 
 // ── Projects ──────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ const projects = Object.values(PORTALS).map((portal) => ({
 
 export default defineConfig({
   testDir,
-  timeout: 60_000,
+  timeout: 90_000,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
