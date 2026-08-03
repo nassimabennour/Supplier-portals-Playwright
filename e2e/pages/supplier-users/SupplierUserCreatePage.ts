@@ -401,12 +401,21 @@ export class SupplierUserPage {
         return false;
     }
 
+    // Shared by expectSupplierUserInList, openUserByFullName, and
+    // expectSupplierUserNotInList: searching by supplier name alone isn't
+    // enough to guarantee a specific row lands on the first page of
+    // results — plenty of rows can share the same supplier — so both search
+    // boxes are filled at once to narrow further, trying both possible
+    // column-order assignments. Which input is "Supplier" vs. "User" isn't
+    // knowable ahead of time — see userListSearchInputs.
+    private buildNameSupplierAssignments(fullName: string, supplierName: string, inputCount: number): [number, string][][] {
+        return inputCount >= 2
+            ? [[[0, supplierName], [1, fullName]], [[0, fullName], [1, supplierName]]]
+            : Array.from({ length: inputCount }, (_, i) => [[i, supplierName]] as [number, string][]);
+    }
+
     // No email column in the list, and name is fixed per portal (only email
     // varies) — match name AND supplier together to rule out a stale row.
-    // Searching by supplier name alone isn't enough to guarantee the new
-    // row lands on the first page of results — plenty of existing rows
-    // already share the same supplier — so both search boxes are filled at
-    // once to narrow further, trying both possible column-order assignments.
     async expectSupplierUserInList(user: NewSupplierUser) {
         const fullName = `${user.lastName} ${user.firstName}`;
         const matchingRow = this.userListRows
@@ -414,9 +423,7 @@ export class SupplierUserPage {
             .filter({ hasText: user.supplierName });
 
         const inputCount = await this.userListSearchInputs.count();
-        const assignments: [number, string][][] = inputCount >= 2
-            ? [[[0, user.supplierName], [1, fullName]], [[0, fullName], [1, user.supplierName]]]
-            : Array.from({ length: inputCount }, (_, i) => [[i, user.supplierName]] as [number, string][]);
+        const assignments = this.buildNameSupplierAssignments(fullName, user.supplierName, inputCount);
 
         if (await this.locateRowViaSearch(matchingRow, assignments)) {
             return;
@@ -427,18 +434,49 @@ export class SupplierUserPage {
         await expect(matchingRow.first()).toBeVisible({ timeout: 5_000 });
     }
 
-    // Locates a row by full name alone (no supplier filter) and opens its
-    // details via the "View & Edit" eye icon — only one value is needed
-    // here since the seed edit user's name alone is expected to be unique
-    // in the list.
-    async openUserByFullName(firstName: string, lastName: string) {
-        const fullName = `${lastName} ${firstName}`;
-        const matchingRow = this.userListRows.filter({ hasText: fullName });
+    // The inverse of expectSupplierUserInList — used after deletion to
+    // confirm the row is actually gone, not just that the search happened
+    // to come up empty because of a column-order mismatch.
+    async expectSupplierUserNotInList(user: NewSupplierUser) {
+        const fullName = `${user.lastName} ${user.firstName}`;
+        const matchingRow = this.userListRows
+            .filter({ hasText: fullName })
+            .filter({ hasText: user.supplierName });
 
         const inputCount = await this.userListSearchInputs.count();
-        const assignments: [number, string][][] = Array.from(
-            { length: inputCount }, (_, i) => [[i, fullName]] as [number, string][]
-        );
+        const assignments = this.buildNameSupplierAssignments(fullName, user.supplierName, inputCount);
+
+        // locateRowViaSearch only waits for the row to appear, not to
+        // disappear — the success toast can fire slightly before the grid
+        // re-syncs, so if it's still there, give it a real (polling) wait
+        // to actually go away instead of failing on a single snapshot.
+        const stillPresent = await this.locateRowViaSearch(matchingRow, assignments);
+        if (stillPresent) {
+            await expect(
+                matchingRow.first(),
+                `Expected "${fullName}" (${user.supplierName}) to be removed from the list, but a matching row is still present.`
+            ).toBeHidden({ timeout: 15_000 });
+        }
+    }
+
+    // Locates a row by full name and opens its details via the "View & Edit"
+    // eye icon. supplierName narrows the match the same way
+    // expectSupplierUserInList does — needed whenever the name alone isn't
+    // guaranteed unique in the list (e.g. a freshly created automation user,
+    // whose first/last name is fixed across every run). Omit it only when
+    // the name alone is known to be unique, as with the edit feature's seed
+    // user.
+    async openUserByFullName(firstName: string, lastName: string, supplierName?: string) {
+        const fullName = `${lastName} ${firstName}`;
+        let matchingRow = this.userListRows.filter({ hasText: fullName });
+        if (supplierName) {
+            matchingRow = matchingRow.filter({ hasText: supplierName });
+        }
+
+        const inputCount = await this.userListSearchInputs.count();
+        const assignments: [number, string][][] = supplierName
+            ? this.buildNameSupplierAssignments(fullName, supplierName, inputCount)
+            : Array.from({ length: inputCount }, (_, i) => [[i, fullName]] as [number, string][]);
 
         if (!(await this.locateRowViaSearch(matchingRow, assignments))) {
             // Fall through to a real assertion so the failure message/screenshot

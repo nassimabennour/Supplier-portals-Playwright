@@ -19,7 +19,7 @@ export const SUPPLIER_USER_DATA: Record<string, PortalSupplierUserData> = {
   CH: { supplierName: '3KV GmbH', jobCategory: 'Automation Tester', emailDomain: 'proton.me', successMessage: 'Utilisateur fournisseur créé et lié avec succès!' },
   DE: { supplierName: '3M', jobCategory: 'Automation Tester', jobTitle: 'CTO', emailDomain: 'proton.me', successMessage: 'Benutzer beim Lieferanten erfolgreich angelegt und verknüpft!' },
   FR: { supplierName: 'ABB', jobCategory: 'Test Manager', emailDomain: 'proton.me', successMessage: 'Utilisateur créé avec succès!' },
-  NL: { supplierName: 'ABB', jobCategory: 'Test Manager', emailDomain: 'proton.me', successMessage: 'Gebruiker aangemaakt en succesvol gelinkt!' },
+  NL: { supplierName: 'ABB', jobCategory: 'Test Manager', emailDomain: 'proton.me', successMessage: 'User created and linked successfully!' },
   SE: { supplierName: 'ABB', jobCategory: 'Test Manager', emailDomain: 'proton.me', successMessage: 'User created and linked successfully!' },
   UK: { supplierName: 'ABB Limited', jobCategory: 'Test Manager', emailDomain: 'proton.me', successMessage: 'User created and linked successfully!' },
   USA: { supplierName: 'ABB INCORPORATED', jobCategory: 'Test Manager', emailDomain: 'proton.me', successMessage: 'User created and linked successfully!' },

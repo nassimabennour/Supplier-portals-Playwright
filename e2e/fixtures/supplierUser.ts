@@ -25,6 +25,15 @@ export const SEED_EDIT_USER = {
   lastName: 'editestt',
 };
 
+// Distinct from generateSupplierUser's default "Automation"/"Testing" name —
+// the delete scenario needs to find and open the *one* user it just
+// created without matching every leftover "Automation Testing" row from
+// every other creation-feature run (which never deletes its user).
+export const DELETE_TEST_NAME = {
+  firstName: 'todelete',
+  lastName: 'todeletee',
+};
+
 export type EditedSupplierUserFields = {
   jobTitle: string;
   firstName: string;
