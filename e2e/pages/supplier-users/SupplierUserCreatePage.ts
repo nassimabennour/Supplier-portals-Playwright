@@ -370,25 +370,15 @@ export class SupplierUserPage {
     }
 
     // ── Supplier user list ──────────────────────────────────────
-    // No email column in the list, and name is fixed per portal (only email
-    // varies) — match name AND supplier together to rule out a stale row.
-    // Searching by supplier name alone isn't enough to guarantee the new
-    // row lands on the first page of results — plenty of existing rows
-    // already share the same supplier — so both search boxes are filled at
-    // once to narrow further. Which one is "Supplier" vs. "User" isn't
-    // knowable ahead of time (see userListSearchInputs), so both possible
-    // column-order assignments are tried in turn.
-    async expectSupplierUserInList(user: NewSupplierUser) {
-        const fullName = `${user.lastName} ${user.firstName}`;
-        const matchingRow = this.userListRows
-            .filter({ hasText: fullName })
-            .filter({ hasText: user.supplierName });
-
+    // Shared by expectSupplierUserInList and openUserByFullName: tries each
+    // given [searchInputIndex, value] assignment in turn (typing per-input,
+    // checking for the row, then clearing on a miss) until one reveals the
+    // row, or reports failure so the caller can fall through to a real
+    // assertion. Column order (which input is "Supplier" vs. "User") isn't
+    // knowable ahead of time — see userListSearchInputs — hence trying
+    // multiple assignments rather than a single fixed one.
+    private async locateRowViaSearch(matchingRow: Locator, assignments: [number, string][][]): Promise<boolean> {
         const inputs = this.userListSearchInputs;
-        const inputCount = await inputs.count();
-        const assignments: [number, string][][] = inputCount >= 2
-            ? [[[0, user.supplierName], [1, fullName]], [[0, fullName], [1, user.supplierName]]]
-            : Array.from({ length: inputCount }, (_, i) => [[i, user.supplierName]] as [number, string][]);
 
         for (const assignment of assignments) {
             for (const [index, value] of assignment) {
@@ -400,7 +390,7 @@ export class SupplierUserPage {
             }
 
             if (await matchingRow.first().isVisible({ timeout: 5_000 }).catch(() => false)) {
-                return;
+                return true;
             }
 
             for (const [index] of assignment) {
@@ -408,9 +398,55 @@ export class SupplierUserPage {
             }
         }
 
+        return false;
+    }
+
+    // No email column in the list, and name is fixed per portal (only email
+    // varies) — match name AND supplier together to rule out a stale row.
+    // Searching by supplier name alone isn't enough to guarantee the new
+    // row lands on the first page of results — plenty of existing rows
+    // already share the same supplier — so both search boxes are filled at
+    // once to narrow further, trying both possible column-order assignments.
+    async expectSupplierUserInList(user: NewSupplierUser) {
+        const fullName = `${user.lastName} ${user.firstName}`;
+        const matchingRow = this.userListRows
+            .filter({ hasText: fullName })
+            .filter({ hasText: user.supplierName });
+
+        const inputCount = await this.userListSearchInputs.count();
+        const assignments: [number, string][][] = inputCount >= 2
+            ? [[[0, user.supplierName], [1, fullName]], [[0, fullName], [1, user.supplierName]]]
+            : Array.from({ length: inputCount }, (_, i) => [[i, user.supplierName]] as [number, string][]);
+
+        if (await this.locateRowViaSearch(matchingRow, assignments)) {
+            return;
+        }
+
         // Fall through to a real assertion so the failure message/screenshot
         // is standard, rather than a hand-rolled throw.
         await expect(matchingRow.first()).toBeVisible({ timeout: 5_000 });
+    }
+
+    // Locates a row by full name alone (no supplier filter) and opens its
+    // details via the "View & Edit" eye icon — only one value is needed
+    // here since the seed edit user's name alone is expected to be unique
+    // in the list.
+    async openUserByFullName(firstName: string, lastName: string) {
+        const fullName = `${lastName} ${firstName}`;
+        const matchingRow = this.userListRows.filter({ hasText: fullName });
+
+        const inputCount = await this.userListSearchInputs.count();
+        const assignments: [number, string][][] = Array.from(
+            { length: inputCount }, (_, i) => [[i, fullName]] as [number, string][]
+        );
+
+        if (!(await this.locateRowViaSearch(matchingRow, assignments))) {
+            // Fall through to a real assertion so the failure message/screenshot
+            // is standard, rather than a hand-rolled throw.
+            await expect(matchingRow.first()).toBeVisible({ timeout: 5_000 });
+        }
+
+        await matchingRow.first().locator('i.fa-eye').click();
     }
 
     // ── Assertions ───────────────────────────────────────────────
