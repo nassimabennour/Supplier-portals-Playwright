@@ -29,14 +29,25 @@ export class SupplierUserDeletePage {
         this.deletedToast = page.locator('[data-cy="toast-header"]');
     }
 
-    async deleteAccount() {
+    async openDeleteModal() {
         await this.deleteAccountButton.click();
         await expect(this.confirmDeleteButton).toBeVisible({ timeout: 10_000 });
+    }
+
+    async confirmDeletion() {
         await this.confirmDeleteButton.click();
 
         // The toast auto-hides after its own data-delay (3s) — assert while
         // it's up rather than assuming it's still there by the time the
         // next step runs.
         await expect(this.deletedToast).toBeVisible({ timeout: 15_000 });
+    }
+
+    async cancelDeletion() {
+        await this.keepUserButton.click();
+
+        // Confirm the modal actually closed rather than assuming the click
+        // landed — same reasoning as confirmDeletion waiting for the toast.
+        await expect(this.confirmDeleteButton).toBeHidden({ timeout: 5_000 });
     }
 }

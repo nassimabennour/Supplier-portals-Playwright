@@ -30,8 +30,17 @@ export const SEED_EDIT_USER = {
 // created without matching every leftover "Automation Testing" row from
 // every other creation-feature run (which never deletes its user).
 export const DELETE_TEST_NAME = {
-  firstName: 'todelete',
-  lastName: 'todeletee',
+  firstName: 'delete',
+  lastName: 'test',
+};
+
+// A separate name for the cancel-deletion scenario — that scenario never
+// actually deletes its user, so reusing DELETE_TEST_NAME would leave a
+// leftover row behind that collides with the nominal scenario's own search
+// for "the one user it just created" on the next run.
+export const CANCEL_DELETE_TEST_NAME = {
+  firstName: 'cancel',
+  lastName: 'test',
 };
 
 export type EditedSupplierUserFields = {
