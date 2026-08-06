@@ -21,8 +21,8 @@ export type NewSupplierUser = {
 // the edit scenario — same name everywhere, everything else about it
 // (supplier, job category, ...) is arbitrary and not relied upon.
 export const SEED_EDIT_USER = {
-  firstName: 'editest',
-  lastName: 'editestt',
+  firstName: 'user',
+  lastName: 'toedit',
 };
 
 export type EditedSupplierUserFields = {
