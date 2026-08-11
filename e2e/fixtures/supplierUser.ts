@@ -1,8 +1,9 @@
 import { SUPPLIER_USER_DATA } from './data/supplierUserData';
 
-// Emails and job titles only need to be unique per test run, not globally
-// stable — the current timestamp's last 8 digits is enough entropy for that.
-function generateUniqueId(): string {
+// Emails, job titles, and delete-scenario names only need to be unique per
+// test run, not globally stable — the current timestamp's last 8 digits is
+// enough entropy for that.
+export function generateUniqueId(): string {
   return Date.now().toString().slice(-8);
 }
 

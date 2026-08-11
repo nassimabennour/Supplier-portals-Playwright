@@ -17,3 +17,6 @@ node_modules/
 # Claude
 .claude/
 .features-gen/
+
+# Rapport de stage — non versionné
+rapport-stage/

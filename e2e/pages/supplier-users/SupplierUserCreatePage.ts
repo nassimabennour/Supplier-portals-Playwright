@@ -371,16 +371,37 @@ export class SupplierUserPage {
 
     // ── Supplier user list ──────────────────────────────────────
     // Shared by expectSupplierUserInList and openUserByFullName: tries each
-    // given [searchInputIndex, value] assignment in turn (typing per-input,
-    // checking for the row, then clearing on a miss) until one reveals the
-    // row, or reports failure so the caller can fall through to a real
-    // assertion. Column order (which input is "Supplier" vs. "User") isn't
-    // knowable ahead of time — see userListSearchInputs — hence trying
-    // multiple assignments rather than a single fixed one.
+    // given [searchInputIndex, value] assignment in turn (clearing then
+    // typing per-input, checking for the row) until one reveals the row, or
+    // reports failure so the caller can fall through to a real assertion.
+    // Column order (which input is "Supplier" vs. "User") isn't knowable
+    // ahead of time — see userListSearchInputs — hence trying multiple
+    // assignments rather than a single fixed one. Note that on a hit, the
+    // input is deliberately left filled (not cleared) — callers like
+    // openUserByFullName rely on the filter still being applied to the row
+    // they're about to click.
     private async locateRowViaSearch(matchingRow: Locator, assignments: [number, string][][]): Promise<boolean> {
         const inputs = this.userListSearchInputs;
+        const inputCount = await inputs.count();
 
         for (const assignment of assignments) {
+            // Clear *every* input before each attempt, not only the ones this
+            // assignment fills. Two reasons:
+            //   1. A prior successful search leaves its term sitting in the
+            //      input (a hit only clears on a *miss*, not on success), so
+            //      without clearing, pressSequentially would append onto that
+            //      leftover text.
+            //   2. A name-only search (matchBySupplier == false) fills a
+            //      single input per assignment, so the name typed into input 0
+            //      by the previous attempt would still be there when this
+            //      attempt fills input 1 — and the grid's AND-filter across
+            //      the supplier and user columns then matches nothing (it's
+            //      searching for a user whose supplier name equals the user's
+            //      own name).
+            for (let i = 0; i < inputCount; i++) {
+                await inputs.nth(i).fill('');
+            }
+
             for (const [index, value] of assignment) {
                 // Real per-keystroke typing, not .fill() — the live-search
                 // here appears to be driven by individual keyup events (with
@@ -391,10 +412,6 @@ export class SupplierUserPage {
 
             if (await matchingRow.first().isVisible({ timeout: 5_000 }).catch(() => false)) {
                 return true;
-            }
-
-            for (const [index] of assignment) {
-                await inputs.nth(index).fill('');
             }
         }
 
@@ -416,14 +433,22 @@ export class SupplierUserPage {
 
     // No email column in the list, and name is fixed per portal (only email
     // varies) — match name AND supplier together to rule out a stale row.
-    async expectSupplierUserInList(user: NewSupplierUser) {
+    // matchBySupplier narrows the search by supplier in addition to name.
+    // Needed when the name alone isn't unique (e.g. the creation feature's
+    // fixed "Automation Testing"), but pass false when the name already
+    // carries a per-run unique ID (delete/cancel) — that skips the fragile
+    // two-input supplier/user column-order guessing entirely.
+    async expectSupplierUserInList(user: NewSupplierUser, matchBySupplier = true) {
         const fullName = `${user.lastName} ${user.firstName}`;
-        const matchingRow = this.userListRows
-            .filter({ hasText: fullName })
-            .filter({ hasText: user.supplierName });
+        let matchingRow = this.userListRows.filter({ hasText: fullName });
+        if (matchBySupplier) {
+            matchingRow = matchingRow.filter({ hasText: user.supplierName });
+        }
 
         const inputCount = await this.userListSearchInputs.count();
-        const assignments = this.buildNameSupplierAssignments(fullName, user.supplierName, inputCount);
+        const assignments = matchBySupplier
+            ? this.buildNameSupplierAssignments(fullName, user.supplierName, inputCount)
+            : Array.from({ length: inputCount }, (_, i) => [[i, fullName]] as [number, string][]);
 
         if (await this.locateRowViaSearch(matchingRow, assignments)) {
             return;
@@ -437,14 +462,17 @@ export class SupplierUserPage {
     // The inverse of expectSupplierUserInList — used after deletion to
     // confirm the row is actually gone, not just that the search happened
     // to come up empty because of a column-order mismatch.
-    async expectSupplierUserNotInList(user: NewSupplierUser) {
+    async expectSupplierUserNotInList(user: NewSupplierUser, matchBySupplier = true) {
         const fullName = `${user.lastName} ${user.firstName}`;
-        const matchingRow = this.userListRows
-            .filter({ hasText: fullName })
-            .filter({ hasText: user.supplierName });
+        let matchingRow = this.userListRows.filter({ hasText: fullName });
+        if (matchBySupplier) {
+            matchingRow = matchingRow.filter({ hasText: user.supplierName });
+        }
 
         const inputCount = await this.userListSearchInputs.count();
-        const assignments = this.buildNameSupplierAssignments(fullName, user.supplierName, inputCount);
+        const assignments = matchBySupplier
+            ? this.buildNameSupplierAssignments(fullName, user.supplierName, inputCount)
+            : Array.from({ length: inputCount }, (_, i) => [[i, fullName]] as [number, string][]);
 
         // locateRowViaSearch only waits for the row to appear, not to
         // disappear — the success toast can fire slightly before the grid
