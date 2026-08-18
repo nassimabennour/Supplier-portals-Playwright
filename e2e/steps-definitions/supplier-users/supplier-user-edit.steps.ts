@@ -34,7 +34,17 @@ When('the super admin saves the changes', async ({ page }) => {
     await supplierUserEditPage.saveChanges();
 });
 
+When('the super admin cancels editing', async ({ page }) => {
+    const supplierUserEditPage = new SupplierUserEditPage(page);
+    await supplierUserEditPage.cancelEdit();
+});
+
 Then('the supplier user details match the new data', async ({ page }) => {
     const supplierUserEditPage = new SupplierUserEditPage(page);
     await supplierUserEditPage.expectDetailsMatch(newDetails);
+});
+
+Then('the supplier user details remain unchanged', async ({ page }) => {
+    const supplierUserEditPage = new SupplierUserEditPage(page);
+    await supplierUserEditPage.expectNameUnchanged(SEED_EDIT_USER);
 });

@@ -18,12 +18,12 @@ export type NewSupplierUser = {
   successMessage: string;
 };
 
-// The seed supplier user manually created in every portal specifically for
-// the edit scenario — same name everywhere, everything else about it
-// (supplier, job category, ...) is arbitrary and not relied upon.
+// Manually pre-created in every portal for the edit scenario — name is
+// fixed (used to look the user up), everything else is arbitrary.
+// Used by: supplier-user-edit.steps.ts (lookup), generateEditedSupplierUser().
 export const SEED_EDIT_USER = {
-  firstName: 'editest',
-  lastName: 'editestt',
+  firstName: 'user',
+  lastName: 'toedit',
 };
 
 // Distinct from generateSupplierUser's default "Automation"/"Testing" name —
@@ -50,24 +50,13 @@ export type EditedSupplierUserFields = {
   lastName: string;
 };
 
-// Job Category and phone number are deliberately left out here: Job Category
-// has no second QA-verified value per portal yet, and phone has no verified
-// country/number pairing per portal — same reason SupplierUserPage.
-// fillAccountDetails already leaves phone blank during creation.
-//
-// Firstname/Lastname are pinned to SEED_EDIT_USER rather than varied: the
-// edit scenario finds this user by that exact name on every run, so changing
-// it here would make the seed user impossible to find next time. Job title
-// is still made unique per run — otherwise a no-op save could coincidentally
-// "pass" against a value left over from the previous run.
-//
-// Email is deliberately never generated or touched here: editing it triggers
-// a "domain not certified" validation that's scoped per supplier, and the
-// seed user's actual supplier differs per portal (and isn't under test
-// control) — neither proton.me nor outlook.com clears it on UK, for example.
-// Only R3S/USA were confirmed to accept an edited email at all. Until
-// someone with admin access confirms a domain that's actually certified for
-// each portal's seed user, editing email isn't covered by this scenario.
+// Job Category/phone excluded (no verified per-portal values). First/last
+// name are pinned to SEED_EDIT_USER so the seed user stays findable by name
+// next run. Job title is made unique per run so a no-op save can't
+// accidentally "pass". Email is left untouched — editing it triggers a
+// per-supplier "domain not certified" check that isn't reliably clearable
+// everywhere (only R3S/USA confirmed so far).
+// Used by: supplier-user-edit.steps.ts → SupplierUserEditPage.fillDetails().
 export function generateEditedSupplierUser(): EditedSupplierUserFields {
   const uniqueId = generateUniqueId();
 
