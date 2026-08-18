@@ -9,7 +9,6 @@ export class LoginPage {
     readonly emailInput: Locator;
     readonly passwordInput: Locator;
     readonly loginButton: Locator;
-
     readonly errorMessage: Locator;
     readonly emailFormatError: Locator;
     readonly requiredFieldError: Locator;
@@ -54,8 +53,11 @@ export class LoginPage {
 
     async login(email: string, password: string) {
         if (this.connectToViewButton) {
+            // networkidle is unreliable here (R3S keeps background network
+            // activity alive) and can hang until the test timeout. fillEmail()
+            // already waits for the email field to be visible, so that's the
+            // real readiness signal we need.
             await this.connectToViewButton.click();
-            await this.page.waitForLoadState('networkidle');
         }
 
         await this.fillEmail(email);
@@ -66,7 +68,6 @@ export class LoginPage {
     async submitEmptyForm() {
         if (this.connectToViewButton) {
             await this.connectToViewButton.click();
-            await this.page.waitForLoadState('networkidle');
         }
 
         await this.clickLogin();
@@ -75,7 +76,6 @@ export class LoginPage {
     async enterInvalidEmailFormat(malformedEmail: string) {
         if (this.connectToViewButton) {
             await this.connectToViewButton.click();
-            await this.page.waitForLoadState('networkidle');
         }
 
         await this.fillEmail(malformedEmail);
@@ -91,11 +91,15 @@ export class LoginPage {
     }
 
     async expectRedirectedAfterLogin() {
-        await expect(this.page).toHaveURL(/home/);
+        await expect(this.page).toHaveURL(/\/home/, { timeout: 30_000 });
     }
 
     async expectLoginError() {
-        await expect(this.errorMessage).toBeVisible();
+        // Same cause as expectRedirectedAfterLogin's longer timeout — this
+        // message only appears once B2C actually responds to the wrong
+        // password/unknown email attempt (a real network round-trip), which
+        // the default 5s expect timeout doesn't reliably allow for.
+        await expect(this.errorMessage).toBeVisible({ timeout: 20_000 });
     }
 
     async expectInvalidEmailFormatError() {
@@ -104,5 +108,5 @@ export class LoginPage {
 
     async expectRequiredFieldError() {
         await expect(this.requiredFieldError).toBeVisible();
-     }
+    }
 }
