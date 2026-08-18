@@ -9,7 +9,6 @@ export class LoginPage {
     readonly emailInput: Locator;
     readonly passwordInput: Locator;
     readonly loginButton: Locator;
-
     readonly errorMessage: Locator;
     readonly emailFormatError: Locator;
     readonly requiredFieldError: Locator;
@@ -92,10 +91,7 @@ export class LoginPage {
     }
 
     async expectRedirectedAfterLogin() {
-        // The B2C OAuth redirect chain can take longer than the default 5s
-        // expect timeout, especially on slower portals — give it more room
-        // rather than inflating the global default for every assertion.
-        await expect(this.page).toHaveURL(/home/, { timeout: 20_000 });
+        await expect(this.page).toHaveURL(/\/home/, { timeout: 30_000 });
     }
 
     async expectLoginError() {
@@ -112,5 +108,5 @@ export class LoginPage {
 
     async expectRequiredFieldError() {
         await expect(this.requiredFieldError).toBeVisible();
-     }
+    }
 }
