@@ -1,5 +1,6 @@
 import { createBdd } from 'playwright-bdd';
 import { LoginPage } from '../../pages/auth/LoginPage';
+import { CookieConsent } from '../../pages/home/cookieConsent';
 import { getCredentials } from '../../fixtures/users';
 import { getLocators } from '../../locators/locators';
 
@@ -27,6 +28,24 @@ When('they log in with valid credentials', async ({ page, $testInfo }) => {
 Then('they should be redirected after login', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.expectRedirectedAfterLogin();
+});
+
+Given('cookies are accepted if present', async ({ page }) => {
+    const cookieConsent = new CookieConsent(page);
+    await cookieConsent.acceptIfPresent();
+});
+
+Given('the super admin is logged in', async ({ page, $testInfo }) => {
+    const portal    = $testInfo.project.name;
+    const user      = getCredentials(portal, 'superAdmin');
+    const locators  = getLocators(portal);
+    const loginPage = new LoginPage(page, locators);
+
+    await loginPage.goto();
+    await loginPage.login(user.email, user.password);
+    await loginPage.expectRedirectedAfterLogin();
+    const cookieConsent = new CookieConsent(page);
+    await cookieConsent.acceptIfPresent();
 });
 
 When('they log in with valid system admin credentials', async ({ page, $testInfo }) => {
