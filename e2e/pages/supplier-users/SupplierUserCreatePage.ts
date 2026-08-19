@@ -261,7 +261,12 @@ export class SupplierUserPage {
         if (!label) {
             throw new Error(`No stepper label configured for step "${stepKey}" on portal "${portal}"`);
         }
-        await expect(this.activeStepLabel).toHaveText(label);
+
+        // A portal can list multiple acceptable translations (e.g. NL, where
+        // the rendered language isn't under test control) — match any of them.
+        const candidates = Array.isArray(label) ? label : [label];
+        const escaped = candidates.map(c => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        await expect(this.activeStepLabel).toHaveText(new RegExp(`^(${escaped.join('|')})$`));
     }
 
     // ── Step 2: Access Rights ─────────────────────────────────────
