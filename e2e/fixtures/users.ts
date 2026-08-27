@@ -1,5 +1,5 @@
 export type Environment = 'qa' | 'uat' | 'ppr';
-export type UserRole = 'superAdmin' | 'systemAdmin';
+export type UserRole = 'superAdmin' | 'systemAdmin' | 'supplierUser';
 
 export type TestUser = {
   email: string;
@@ -29,8 +29,9 @@ function getUser(
 
 function roleToEnvKey(role: UserRole): string {
   const map: Record<UserRole, string> = {
-    superAdmin:  'SUPER_ADMIN',
-    systemAdmin: 'SYSTEM_ADMIN',
+    superAdmin:   'SUPER_ADMIN',
+    systemAdmin:  'SYSTEM_ADMIN',
+    supplierUser: 'SUPPLIER_USER',
   };
   return map[role];
 }
