@@ -13,3 +13,10 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Claude
+.claude/
+.features-gen/
+
+# Rapport de stage — non versionné
+rapport-stage/
