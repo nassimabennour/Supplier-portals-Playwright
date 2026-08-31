@@ -16,6 +16,12 @@ const { Given, When, Then } = createBdd();
 let supplierUserPage: Page;
 
 Given('the supplier user is logged in', async ({ page, $testInfo }) => {
+    // Close the previous scenario's context — @mode:serial means this step
+    // can run more than once in the same worker.
+    if (supplierUserPage) {
+        await supplierUserPage.context().close();
+    }
+
     const portal = $testInfo.project.name;
     const context = await page.context().browser()!.newContext();
     supplierUserPage = await context.newPage();
@@ -46,10 +52,9 @@ When('the supplier user re-uploads the corrected file', async () => {
 });
 
 When('the super admin opens the declaration from the list', async ({ page }) => {
-    // Reload alone isn't enough — it lands back on the stale detail page.
-    // Go to Home first since that's what goToManageSalesDeclaration() expects.
+    // A plain reload isn't enough — it lands back on the stale detail page.
+    // Go to Home instead since that's what goToManageSalesDeclaration() expects.
     await page.goto('/home');
-    await page.reload();
 
     const listPage = new SalesDeclarationListPage(page);
     await listPage.openDeclarationByCampaign(getCurrentCampaignName());

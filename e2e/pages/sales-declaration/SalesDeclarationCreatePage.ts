@@ -71,8 +71,9 @@ export class SalesDeclarationCreatePage {
         await expect(this.userToggleButton).toBeEnabled({ timeout: 10_000 });
         await this.userToggleButton.click();
 
-        // Matched by name — the radio's index-based id isn't stable.
-        const userOption = this.supplierSection.locator('label.custom-control-label', { hasText: userName });
+        // Matched by exact name — the radio's index-based id isn't stable,
+        // and a substring match could hit two names that overlap.
+        const userOption = this.supplierSection.locator('label.custom-control-label').getByText(userName, { exact: true });
         await expect(userOption).toBeVisible({ timeout: 10_000 });
         await userOption.click();
     }
@@ -83,18 +84,18 @@ export class SalesDeclarationCreatePage {
     }
 
     async setReminderDate() {
-        await this.reminderDateInput.click();
+        // Filled directly rather than driven through the calendar widget:
+        // picking "tomorrow" by cell position (e.g. nth(1)) breaks at month
+        // boundaries, since which cell that is shifts or vanishes depending
+        // on how the picker renders the turn of the month.
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dd = String(tomorrow.getDate()).padStart(2, '0');
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const yyyy = tomorrow.getFullYear();
 
-        // Two panels render; .left is the visible one.
-        const calendar = this.page.locator('.drp-calendar.left');
-        await expect(calendar).toBeVisible({ timeout: 10_000 });
-
-        // Today is also "available" — nth(1) picks tomorrow instead.
-        const availableDays = calendar.locator('td.available:not(.disabled)');
-        await availableDays.nth(1).click();
-
-        await this.page.getByRole('button', { name: 'Apply' }).click();
-        await expect(calendar).toBeHidden({ timeout: 5_000 });
+        await this.reminderDateInput.fill(`${dd}/${mm}/${yyyy}`);
+        await this.reminderDateInput.press('Tab');
     }
 
     async submit() {

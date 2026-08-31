@@ -28,12 +28,8 @@ export class SalesDeclarationListPage {
 
     async goToManageSalesDeclaration() {
         // Cookie modal can reappear after Background's own check passed and
-        // block this click — toPass() retries both together.
-        const cookieConsent = new CookieConsent(this.page);
-        await expect(async () => {
-            await cookieConsent.acceptIfPresent();
-            await this.adminConsoleButton.click({ timeout: 5_000 });
-        }).toPass({ timeout: 30_000 });
+        // block this click.
+        await new CookieConsent(this.page).acceptThenClick(this.adminConsoleButton);
 
         await this.secureDataExchangeToggle.click();
         await this.manageSalesDeclarationLink.click();

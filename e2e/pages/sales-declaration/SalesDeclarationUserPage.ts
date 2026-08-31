@@ -18,7 +18,10 @@ export class SalesDeclarationUserPage {
 
         // Scoped to .document-upload — name/icon alone is ambiguous since
         // the timeline and "Rexel's affiliates" panel also have "Download"
-        // buttons.
+        // buttons. Assumes exactly one pending declaration for this
+        // supplier/user; only review.feature's own scenarios are
+        // @mode:serial with each other, so a declaration created
+        // concurrently by create.feature could still race this.
         this.downloadButton = page.locator('.document-upload').getByRole('button', { name: 'Download', exact: true });
 
         // Hidden by design, same as the creation form's upload widget.
@@ -28,11 +31,7 @@ export class SalesDeclarationUserPage {
     async goToSalesDeclarations() {
         // Same cookie-modal race as the admin side — a fresh session can
         // hit it too.
-        const cookieConsent = new CookieConsent(this.page);
-        await expect(async () => {
-            await cookieConsent.acceptIfPresent();
-            await this.secureDataNavToggle.click({ timeout: 5_000 });
-        }).toPass({ timeout: 30_000 });
+        await new CookieConsent(this.page).acceptThenClick(this.secureDataNavToggle);
 
         await this.salesDeclarationsLink.click();
         await expect(this.downloadButton).toBeVisible({ timeout: 15_000 });
