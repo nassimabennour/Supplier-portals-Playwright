@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 // Cookie banner text is localized per portal ("Accept" / "Accepter" / etc.)
 // and matching by wording keeps breaking as new languages show up, so this
@@ -20,5 +20,14 @@ export class CookieConsent {
         if (await this.acceptButton.isVisible({ timeout: 5_000 }).catch(() => false)) {
             await this.acceptButton.click();
         }
+    }
+
+    // The banner can reappear and swallow a click meant for something else —
+    // retries dismiss+click together until one attempt lands clean.
+    async acceptThenClick(target: Locator) {
+        await expect(async () => {
+            await this.acceptIfPresent();
+            await target.click({ timeout: 5_000 });
+        }).toPass({ timeout: 30_000 });
     }
 }
